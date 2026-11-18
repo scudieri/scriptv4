@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Roteiro de recovery</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EDF0F3; --panel:#FFFFFF; --ink:#16202A; --muted:#5B6773; --faint:#AEB8C2; --line:#D3D9DF;
+  --yes:#1D6E55; --yes-bg:#E3F2EC; --no:#B3263A; --no-bg:#FBE8EB; --neutral-bg:#E4E9EE; --accent:#2A4C8C;
+  color-scheme: light; box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#11171D; --panel:#1A222B; --ink:#E7ECF1; --muted:#9AA6B2; --faint:#4A5765; --line:#2C3743;
+    --yes:#6FD0AE; --yes-bg:#173329; --no:#F28A99; --no-bg:#3A1C22; --neutral-bg:#24303B; --accent:#8FB0EC; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#11171D; --panel:#1A222B; --ink:#E7ECF1; --muted:#9AA6B2; --faint:#4A5765; --line:#2C3743;
+  --yes:#6FD0AE; --yes-bg:#173329; --no:#F28A99; --no-bg:#3A1C22; --neutral-bg:#24303B; --accent:#8FB0EC; color-scheme: dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Instrument Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:16px;line-height:1.5}
+main{max-width:640px;margin:0 auto;padding:20px 16px 60px}
+h1{font-size:22px;font-weight:600;margin:4px 0 2px;letter-spacing:-0.01em}
+.sub{margin:0 0 16px;font-size:14px;color:var(--muted)}
+.lead{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.lead label{font-size:13px;color:var(--muted);display:block}
+.lead input{width:100%;margin-top:4px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font:inherit}
+.tools{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.tool{font:inherit;font-size:14px;padding:8px 12px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}
+.tool:disabled{opacity:.4;cursor:default}
+.tool.away{margin-left:auto}
+.node{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.node.past{padding:12px 16px;background:transparent}
+.node.current{border-color:var(--accent);border-width:1.5px}
+.phase{font-size:12px;color:var(--accent);font-weight:500;margin:0 0 4px}
+.say{font-family:"Newsreader",Georgia,serif;font-size:22px;line-height:1.45;margin:0}
+.past .say{font-size:16px;color:var(--muted)}
+.say::before{content:"\201C"}.say::after{content:"\201D"}
+.result{font-size:19px;font-weight:600;margin:0 0 6px}
+.past .result{font-size:15px}
+.result.ok{color:var(--yes)}.result.bad{color:var(--no)}.result.mid{color:var(--accent)}
+.tip{margin:12px 0 0;font-size:14px;color:var(--muted);border-left:3px solid var(--line);padding-left:10px}
+.past .tip{display:none}
+svg.wire{display:block;width:100%;height:26px;overflow:visible}
+svg.wire path{fill:none;stroke-width:2;vector-effect:non-scaling-stroke}
+.w-on{stroke:var(--accent)}.w-off{stroke:var(--faint);stroke-dasharray:4 4}.w-idle{stroke:var(--line)}
+.branches{display:grid;gap:12px}
+.branches.two{grid-template-columns:1fr 1fr}
+.br{font:inherit;text-align:center;border-radius:10px;cursor:pointer;border:1.5px solid transparent;padding:10px 8px;background:var(--neutral-bg);color:var(--ink)}
+.br .lbl{display:block;font-weight:600;font-size:15px}
+.br .to{display:block;font-size:12px;opacity:.8;margin-top:2px}
+.br.chosen.yes{background:var(--yes-bg);color:var(--yes);border-color:var(--yes)}
+.br.chosen.no{background:var(--no-bg);color:var(--no);border-color:var(--no)}
+.br.chosen{border-color:var(--accent)}
+.br.other{background:transparent;border:1.5px dashed var(--faint);color:var(--muted)}
+.br.other:hover{border-color:var(--accent);color:var(--ink)}
+.live .br{font-size:18px;padding:14px 10px;min-height:60px}
+.live .br:not(.yes):not(.no){background:var(--panel);border-color:var(--accent);color:var(--ink)}
+.live .br .lbl{font-size:18px}
+.live .br.yes{background:var(--yes-bg);color:var(--yes);border-color:var(--yes)}
+.live .br.no{background:var(--no-bg);color:var(--no);border-color:var(--no)}
+.br:focus-visible,.tool:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.summary{margin-top:14px}
+.summary textarea{width:100%;min-height:120px;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit;font-size:14px}
+.cap{display:block;margin-top:14px;font-size:13px;font-weight:500;color:var(--accent)}
+.cap textarea{display:block;width:100%;min-height:64px;margin-top:6px;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit;font-size:15px;font-weight:400;resize:vertical}
+.cap textarea:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.note{margin:8px 0 0;font-size:14px;color:var(--ink);background:var(--neutral-bg);border-radius:8px;padding:8px 10px}
+.br .ex{display:block;font-family:"Newsreader",Georgia,serif;font-size:15px;font-weight:400;line-height:1.35;margin-top:6px;opacity:.85}
+@media (max-width:520px){.live .branches.two.multi{grid-template-columns:1fr}}
+.cap input.num{display:block;width:100%;margin-top:6px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit;font-size:16px;font-weight:400}
+.cap input.num:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.reveal{margin-top:16px;padding:14px 16px;border-radius:10px;background:var(--yes-bg);color:var(--ink);font-size:19px}
+.past .reveal{font-size:15px;padding:8px 12px}
+.reveal::before,.reveal::after{content:none}
+.keys{font-size:12px;color:var(--muted);margin-top:24px}
+@media (prefers-reduced-motion: no-preference){
+  .grow{animation:grow .35s ease-out}
+  @keyframes grow{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+}
+@media (max-width:420px){.say{font-size:20px}.lead{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main>
+  <h1>Roteiro de recovery</h1>
+  <p class="sub">V4 Company, Oxicore</p>
+  <div class="lead">
+    <label>Nome do lead<input id="nome" autocomplete="off" placeholder="Ex.: Carlos"></label>
+    <label>Empresa<input id="empresa" autocomplete="off" placeholder="Ex.: Loja Aurora"></label>
+  </div>
+  <div class="tools">
+    <button class="tool" id="back">Voltar</button>
+    <button class="tool" id="restart">Recomeçar</button>
+    <button class="tool away" id="noanswer">Não atendeu</button>
+  </div>
+  <div id="tree" aria-live="polite"></div>
+  <p class="keys">Atalhos: S para sim, N para não, 1 a 4 nas opções múltiplas, Enter para continuar e ← para voltar (fora dos campos de texto). Toque num caminho tracejado para trocar a resposta naquele ponto.</p>
+</main>
+<script>
+const N = {
+  abertura:{"p": "abertura", "say": "Oi, {nome}! Paulo, da V4. Em [mês] vocês conversaram com a gente sobre a {empresa}, lembra?", "tip": "Leve e direto. Quem conduz é você.", "o": [["Sim", "gancho", "yes"], ["Não lembra", "naolembra", "no"]]},
+  naolembra:{"p": "abertura", "say": "Foi em [mês], sobre vendas. Mas o motivo da ligação é outro.", "o": [["Continuar", "gancho"]]},
+  gancho:{"p": "diagnostico", "say": "Desde aquela conversa, o que vocês mudaram pra vender mais?", "o": [["Mudaram algo", "fez", "yes"], ["Nada ainda", "podevender", "no"]]},
+  fez:{"p": "diagnostico", "say": "E o que isso trouxe de resultado até agora?", "o": [["Resultado bom", "demanda", "yes"], ["Abaixo do esperado", "q_ineficiencia", "no"]]},
+  demanda:{"p": "diagnostico", "say": "Boa! E se amanhã entrasse o dobro de clientes, o que travaria primeiro?", "o": [["Nada travaria", "q_estrategia", "yes"], ["Algo travaria", "qual1", "no"]]},
+  podevender:{"p": "diagnostico", "say": "Com a estrutura que vocês já têm, quanto a mais você acha que dá pra vender?", "o": [["Dá pra vender mais", "q_estrategia", "yes"], ["Já tá no limite", "qual1", "no"]]},
+  qual1:{"p": "diagnostico", "say": "Hoje, quantos clientes entram por mês e qual o ticket médio?", "cap": "Clientes/mês e ticket médio", "o": [["Continuar", "qual2"]]},
+  qual2:{"p": "diagnostico", "say": "Entre os clientes de hoje, quais são os que mais deixam dinheiro?", "o": [["Tem um perfil que paga mais", "qual3", "yes"], ["Todos são parecidos", "desq", "no"]]},
+  qual3:{"p": "diagnostico", "say": "Se a maioria dos clientes fosse desse perfil, como ficaria o faturamento?", "o": [["Cresceria", "qual4", "yes"], ["Ficaria igual", "desq", "no"]]},
+  qual4:{"p": "diagnostico", "say": "O que vocês fazem hoje pra atrair mais clientes assim?", "o": [["Tem uma ação", "qual5", "yes"], ["Nada específico", "q_estrategia", "no"]]},
+  qual5:{"p": "diagnostico", "say": "E quanto essa ação tem trazido?", "o": [["Tá funcionando", "desq", "yes"], ["Abaixo do esperado", "q_ineficiencia", "no"]]},
+  q_ineficiencia:{p:"diagnostico",res:["Qualificado: investimento sem retorno","ok"],dor:"o retorno do investimento que vocês já fazem",o:[["Aprofundar a dor","canal"]]},
+  q_estrategia:{p:"diagnostico",res:["Qualificado: falta de estratégia de crescimento","ok"],dor:"uma estratégia pra vender mais e melhor",o:[["Aprofundar a dor","canal"]]},
+  canal:{"p": "dor", "etapa": "Raio-x", "say": "Me conta: hoje, como vocês geram cliente novo? Tem tráfego pago rodando?", "tip": "Ouça o lead e escolha o que mais se parece com a fala dele.", "o": [["Tem tráfego pago", "quem", "", {"canal": "tráfego pago"}], ["Só indicação", "@implNode", "", {"canal": "indicação", "dorEsc": "depender de indicação", "implNode": "e_ind", "necNode": "e_nec"}], ["Orgânico / redes", "@implNode", "", {"canal": "orgânico", "dorEsc": "depender só do orgânico", "implNode": "e_proc", "necNode": "e_nec"}], ["Prospecção ativa", "@implNode", "", {"canal": "prospecção ativa", "dorEsc": "depender de prospecção manual", "implNode": "e_time", "necNode": "e_nec"}]]},
+  quem:{"p": "dor", "etapa": "Raio-x", "say": "Legal. E quem cuida desse tráfego hoje?", "o": [["Agência", "volume", "", {"gestor": "agência"}], ["Gestor interno", "volume", "", {"gestor": "gestor interno"}], ["O próprio dono", "volume", "", {"gestor": "o próprio dono"}]]},
+  volume:{"p": "dor", "etapa": "Raio-x", "say": "E como tá o volume de lead chegando por mês?", "o": [["Bastante lead", "conversao", "", {}], ["Pouco lead", "@implNode", "", {"dorEsc": "pouco lead pro que vocês investem", "implNode": "i_vol", "necNode": "i_nec"}], ["Oscila muito", "@implNode", "", {"dorEsc": "lead oscilando muito", "implNode": "e_proc", "necNode": "i_nec"}]]},
+  conversao:{"p": "dor", "etapa": "Raio-x", "say": "Boa! E desses leads, quantos acabam virando cliente?", "o": [["Converte bem", "@implNode", "", {"dorEsc": "não conseguir escalar o que já funciona", "implNode": "i_escala", "necNode": "i_nec"}], ["Converte pouco", "motivo", "", {}]]},
+  motivo:{"p": "dor", "etapa": "Raio-x", "say": "Na sua visão, por que esses leads não fecham?", "o": [["Lead sem perfil", "@implNode", "", {"dorEsc": "lead desqualificado chegando", "implNode": "i_qual", "necNode": "i_nec"}], ["Demora pra responder", "@implNode", "", {"dorEsc": "demora pra atender os leads", "implNode": "e_time", "necNode": "i_nec"}], ["Comercial não fecha", "@implNode", "", {"dorEsc": "o comercial não convertendo os leads", "implNode": "i_conv", "necNode": "i_nec"}], ["Briga por preço", "@implNode", "", {"dorEsc": "lead chegando só preocupado com preço", "implNode": "e_perfil", "necNode": "i_nec"}]]},
+  i_escala:{"p": "dor", "etapa": "Implicação", "say": "Se já converte bem, o que impede vocês de colocar mais verba e crescer?", "o": [["Medo de perder dinheiro", "custo", "", {"impl": "segurando o crescimento por medo de errar"}], ["Não sabe o que escalar", "custo", "", {"impl": "deixando vocês sem saber o que escalar"}], ["Time no limite", "custo", "", {"impl": "deixando o time no limite"}]]},
+  i_vol:{"p": "dor", "etapa": "Implicação", "say": "Com o volume de lead de hoje, quanto da meta vocês conseguem bater?", "o": [["Meta não bate", "custo", "", {"impl": "deixando a meta sempre pra trás"}], ["Custo por cliente alto", "custo", "", {"impl": "encarecendo cada cliente"}], ["Time comercial ocioso", "custo", "", {"impl": "deixando o time comercial ocioso"}]], "tip": "Deixe o lead contar a consequência com as palavras dele."},
+  i_qual:{"p": "dor", "etapa": "Implicação", "say": "Quanto do tempo do comercial vai pra lead que não tem perfil?", "o": [["Time perde tempo", "custo", "", {"impl": "fazendo o time perder tempo com quem não compra"}], ["Custo por venda alto", "custo", "", {"impl": "encarecendo cada venda"}], ["Time desmotivado", "custo", "", {"impl": "desmotivando o time"}]], "tip": "Deixe o lead contar a consequência com as palavras dele."},
+  i_conv:{"p": "dor", "etapa": "Implicação", "say": "E o lead que não fecha na hora, o que acontece com ele depois?", "o": [["Investimento jogado fora", "custo", "", {"impl": "jogando investimento fora"}], ["Ficam sem follow-up", "custo", "", {"impl": "deixando oportunidade esfriar sem follow-up"}], ["Ciclo de venda longo", "custo", "", {"impl": "alongando o ciclo de venda"}]], "tip": "Deixe o lead contar a consequência com as palavras dele."},
+  e_ind:{"p": "dor", "etapa": "Implicação", "say": "E nos meses em que a indicação cai, o que acontece com o faturamento?", "o": [["Caixa aperta", "custo", "", {"impl": "deixando o caixa instável"}], ["Não consegue planejar", "custo", "", {"impl": "travando o planejamento de crescimento"}], ["Refém de poucos clientes", "custo", "", {"impl": "deixando vocês reféns de poucos clientes"}]], "tip": "Deixe o lead contar a consequência com as palavras dele."},
+  e_proc:{"p": "dor", "etapa": "Implicação", "say": "Quão previsível é o resultado do marketing de um mês pro outro?", "o": [["Resultado oscila", "custo", "", {"impl": "fazendo o resultado oscilar mês a mês"}], ["Não sabe o que funciona", "custo", "", {"impl": "deixando vocês sem saber o que funciona"}], ["Dinheiro sem retorno", "custo", "", {"impl": "fazendo dinheiro ir embora sem retorno"}]], "tip": "Deixe o lead contar a consequência com as palavras dele."},
+  e_perfil:{"p": "dor", "etapa": "Implicação", "say": "E esse cliente que só olha preço, como afeta a margem e a operação de vocês?", "o": [["Ticket baixo", "custo", "", {"impl": "puxando o ticket pra baixo"}], ["Margem apertada", "custo", "", {"impl": "apertando a margem"}], ["Operação sobrecarregada", "custo", "", {"impl": "sobrecarregando a operação"}]], "tip": "Deixe o lead contar a consequência com as palavras dele."},
+  e_time:{"p": "dor", "etapa": "Implicação", "say": "Quando chega uma oportunidade, quem atende e em quanto tempo?", "o": [["Lead esfria", "custo", "", {"impl": "deixando lead esfriar sem resposta"}], ["Dono vende sozinho", "custo", "", {"impl": "deixando a venda toda nas costas do dono"}], ["Empresa não escala", "custo", "", {"impl": "impedindo a empresa de escalar"}]], "tip": "Deixe o lead contar a consequência com as palavras dele."},
+  i_nec:{"p": "dor", "etapa": "Necessidade", "say": "Se isso estivesse resolvido daqui a seis meses, o que seria diferente na empresa?", "o": [["Mais venda com o mesmo investimento", "prioridade", "", {"nec": "vender mais com o mesmo investimento"}], ["Previsibilidade de resultado", "prioridade", "", {"nec": "ter previsibilidade de resultado"}], ["Saber onde investir", "prioridade", "", {"nec": "saber exatamente onde investir"}]], "tip": "Deixe o lead escolher o ganho. É isso que você devolve no fechamento."},
+  e_nec:{"p": "dor", "etapa": "Necessidade", "say": "Se isso estivesse resolvido daqui a seis meses, o que seria diferente na empresa?", "o": [["Cliente todo mês", "prioridade", "", {"nec": "ter cliente chegando todo mês de forma previsível"}], ["Cliente de ticket maior", "prioridade", "", {"nec": "atrair cliente de ticket maior"}], ["Crescer sem depender de indicação", "prioridade", "", {"nec": "crescer sem depender de indicação"}]], "tip": "Deixe o lead escolher o ganho. É isso que você devolve no fechamento."},
+  custo:{"p": "dor", "etapa": "Dinheiro na mesa", "calc": true, "say": "Pra eu entender o tamanho disso, me ajuda com dois números rapidinho.", "tip": "Depois do número, fique em silêncio e deixe o lead reagir.", "o": [["Continuar", "@necNode"]]},
+  prioridade:{"p": "dor", "etapa": "Compromisso", "say": "Resumindo: {dorEsc}, {impl}, e cerca de {custo} por mês ficando na mesa. E o que vocês querem é {nec}. De 0 a 10, quanto é prioridade resolver isso agora?", "tip": "Só ofereça a reunião depois dessa nota.", "o": [["8 a 10", "agora", "yes"], ["5 a 7", "tensao", ""], ["0 a 4", "desq", "no"]]},
+  tensao:{"p": "dor", "etapa": "Compromisso", "say": "O que faria essa nota virar 10?", "o": [["Subiu pra 8+", "agora", "yes"], ["Continua baixo", "desq", "no"]]},
+  agora:{"p": "dor", "etapa": "Compromisso", "say": "Boa! E por que resolver isso agora, e não lá pra frente?", "tip": "O motivo dele vira o argumento do fechamento.", "o": [["Planejamento de 2027", "ponte", "", {"agora": "quer entrar 2027 com isso resolvido"}], ["Caixa apertando", "ponte", "", {"agora": "o caixa tá apertando"}], ["Concorrência", "ponte", "", {"agora": "a concorrência tá passando na frente"}], ["Quer crescer", "ponte", "", {"agora": "quer crescer e isso trava"}]]},
+  ponte:{"p": "dor", "etapa": "Próximo passo", "say": "Faz todo sentido. Então o próximo passo é uma conversa de 40 minutos com nosso especialista. Ele olha esses números com você e mostra um plano pra vocês {nec}. Pra essa conversa render, é importante estar quem decide.", "tip": "Explique o que acontece na reunião antes de falar de agenda.", "o": [["Continuar", "decisor"]]},
+  decisor:{"p": "dor", "etapa": "Compromisso", "say": "Além de você, quem mais participa dessa decisão?", "o": [["Só eu", "fechamento", "yes"], ["Tem sócio", "socio", "no"]]},
+  socio:{"p": "dor", "etapa": "Compromisso", "say": "Então seria legal ele participar também, pra vocês decidirem juntos. Como fica pra ele?", "o": [["Consegue", "fechamento", "yes"], ["Não consegue", "socio2", "no"]]},
+  socio2:{"p": "dor", "etapa": "Compromisso", "say": "Então você participa e leva o plano pra ele. Pode ser?", "o": [["Combinado", "fechamento", "yes"], ["Não topou", "desq", "no"]]},
+  ob_agenda:{"p": "fechamento", "etapa": "Objeção", "say": "São 40 minutos. Qual dia da semana costuma ser mais tranquilo pra você?", "o": [["Marcou", "confirmar", "yes"], ["Não marcou", "ob_pensar", "no"]]},
+  ob_dinheiro:{"p": "fechamento", "etapa": "Objeção", "say": "A reunião não tem custo. O que você precisaria ver nela pra achar que vale a pena?", "o": [["Topou ver", "fechamento", "yes"], ["Não topou", "ob_pensar", "no"]]},
+  ob_cetico:{"p": "fechamento", "etapa": "Objeção", "say": "Justo. O que o especialista precisaria te mostrar pra valer a sua hora?", "o": [["Topou", "fechamento", "yes"], ["Não topou", "ob_pensar", "no"]]},
+  ob_pensar:{"p": "fechamento", "etapa": "Objeção", "say": "Claro. O que exatamente você quer pensar? Talvez eu já consiga ajudar.", "o": [["Destravou", "fechamento", "yes"], ["Disse não", "desq", "no"]]},
+  confirmar:{"p": "fechamento", "say": "Fechado! Te mando o convite no WhatsApp agora, me dá um ok por lá?", "cap": "Data e horário da reunião", "o": [["Confirmou na hora", "fim_ok", "yes"], ["Não confirmou", "ob_pensar", "no"]]},
+  fechamento:{"p": "fechamento", "say": "Perfeito. Como vocês já conversaram com a V4, tenho uma condição de Black Friday pra esse agendamento. Qual fica melhor pra você: [dia] às [hora] ou [dia] às [hora]?", "o": [["Escolheu horário", "confirmar", "yes"], ["Ficou em dúvida", "objecao", "no"]]},
+  objecao:{"p": "fechamento", "say": "O que precisaria ficar claro pra você topar essa conversa?", "tip": "Pergunte com calma. A primeira resposta nem sempre é o motivo real.", "o": [["Agenda", "ob_agenda", ""], ["Dinheiro", "ob_dinheiro", ""], ["Não acredita", "ob_cetico", ""], ["Vai pensar", "ob_pensar", ""]]},
+  fim_ok:{"p": "fechamento", "res": ["Reunião agendada", "ok"], "end": true},
+  desq:{"p": "diagnostico", "res": ["Desqualificado", "bad"], "say": "Tranquilo, obrigado pela sinceridade. Se o cenário mudar, conta com a gente.", "cap": "Motivo da desqualificação", "end": true},
+  naoatendeu:{"p": "abertura", "res": ["Não atendeu", "mid"], "say": "Oi, {nome}! Paulo, da V4. Tentei te ligar sobre a {empresa}. Qual horário fica bom hoje?", "end": true}
+};
+const shortQ={abertura:"Já conversou com a V4?",gancho:"Fez algo para vender mais?",fez:"Resolveu?",demanda:"Aguentaria o dobro?",podevender:"Vende tudo que poderia?",qual2:"Há cliente que paga mais?",qual3:"Focar no perfil daria mais?",qual4:"Há ação para esse perfil?",qual5:"A ação entrega?",prioridade:"Nota de 0 a 10",tensao:"Por que não é 10?",agora:"Por que agora?",ponte:"Próximo passo",decisor:"Quem decide?",socio:"Sócio participa?",socio2:"Leva o plano ao sócio?",fechamento:"Escolheu horário?",objecao:"Objeção",ob_agenda:"Objeção de agenda",ob_dinheiro:"Objeção de dinheiro",ob_cetico:"Objeção de ceticismo",ob_pensar:"Vai pensar",confirmar:"Confirmou no WhatsApp?",i_dor:"Onde está a dor",e_dor:"Onde está a dor",i_vol:"Implicação",i_qual:"Implicação",i_conv:"Implicação",i_med:"Implicação",e_ind:"Implicação",e_proc:"Implicação",e_perfil:"Implicação",e_time:"Implicação",i_nec:"Necessidade",e_nec:"Necessidade",canal:"Como gera cliente",quem:"Quem cuida do tráfego",volume:"Volume de lead",conversao:"Conversão dos leads",motivo:"Por que não fecha",i_escala:"Implicação",tempo:"Há quanto tempo",tentou:"Já tentaram resolver?",falhou:"O que faltou",custo:"Dinheiro na mesa",pessoal:"Como pesa pra ele"};
+const EX={"i_vol": {"Meta não bate": "Tem mês que a meta não bate.", "Custo por cliente alto": "Cada cliente acaba saindo caro.", "Time comercial ocioso": "O comercial fica parado esperando lead."}, "i_qual": {"Time perde tempo": "O pessoal gasta um tempão com quem não compra.", "Custo por venda alto": "No fim, cada venda sai cara.", "Time desmotivado": "O time já fica desanimado."}, "i_conv": {"Investimento jogado fora": "O dinheiro do anúncio acaba indo embora.", "Ficam sem follow-up": "Ninguém volta a chamar, fica parado.", "Ciclo de venda longo": "Demora meses pra fechar."}, "i_med": {"No achismo": "A gente vai mais no feeling.", "Corta o que funciona": "Às vezes corta algo e depois vê que fazia falta.", "Não escala o que dá certo": "Quando algo dá certo, a gente não sabe repetir."}, "e_ind": {"Caixa aperta": "Tem mês que o caixa aperta.", "Não consegue planejar": "Não dá pra planejar nada.", "Refém de poucos clientes": "A gente depende de poucos clientes."}, "e_proc": {"Resultado oscila": "Tem mês bom e mês ruim.", "Não sabe o que funciona": "Não sei dizer o que funciona.", "Dinheiro sem retorno": "Gasto e não vejo retorno."}, "e_perfil": {"Ticket baixo": "A maioria compra pouco.", "Margem apertada": "No fim do mês sobra pouco.", "Operação sobrecarregada": "O time vive sobrecarregado."}, "e_time": {"Lead esfria": "Às vezes a gente demora pra responder e o cliente some.", "Dono vende sozinho": "Se eu não vender, ninguém vende.", "Empresa não escala": "Do jeito que tá, não dá pra crescer."}, "i_nec": {"Mais venda com o mesmo investimento": "A gente venderia mais com o mesmo dinheiro que já investe.", "Previsibilidade de resultado": "Eu saberia quanto vou vender no mês.", "Saber onde investir": "Eu saberia exatamente onde colocar o dinheiro."}, "e_nec": {"Cliente todo mês": "A gente teria cliente entrando todo mês, sem depender de sorte.", "Cliente de ticket maior": "A gente estaria atendendo cliente que paga melhor.", "Crescer sem depender de indicação": "A gente não dependeria só de indicação pra vender."}, "objecao": {"Agenda": "Tô sem tempo agora, a agenda tá cheia.", "Dinheiro": "Agora não tenho como investir.", "Não acredita": "Já tentei agência e não funcionou.", "Vai pensar": "Deixa eu pensar e te falo."}, "canal": {"Tem tráfego pago": "A gente roda anúncio no Meta e no Google.", "Só indicação": "Vem mais por indicação, um cliente indica o outro.", "Orgânico / redes": "A gente posta no Instagram e vem alguma coisa.", "Prospecção ativa": "A gente mesmo liga e chama no WhatsApp."}, "quem": {"Agência": "Tem uma agência que cuida pra gente.", "Gestor interno": "Tem uma pessoa aqui dentro que cuida.", "O próprio dono": "Eu mesmo subo os anúncios."}, "volume": {"Bastante lead": "Chega bastante, o WhatsApp não para.", "Pouco lead": "Chega pouca coisa pro que a gente investe.", "Oscila muito": "Tem semana que chove, tem semana que não vem nada."}, "conversao": {"Converte bem": "A gente fecha uma boa parte.", "Converte pouco": "Chega muito, mas fecha pouco."}, "motivo": {"Lead sem perfil": "É muito curioso, gente sem condição de comprar.", "Demora pra responder": "O time não dá conta de responder todo mundo.", "Comercial não fecha": "Os vendedores atendem, mas não fecham.", "Briga por preço": "Todo mundo só quer saber de preço e desconto."}, "i_escala": {"Medo de perder dinheiro": "Tenho medo de aumentar e perder dinheiro.", "Não sabe o que escalar": "Não sei direito o que tá dando resultado.", "Time no limite": "Se vier mais, o time não aguenta."}, "agora": {"Planejamento de 2027": "Porque quero começar 2027 com isso funcionando, não correndo atrás.", "Caixa apertando": "Porque se esperar mais, o caixa não aguenta.", "Concorrência": "Porque cada mês que passa, a concorrência pega mais cliente.", "Quer crescer": "Porque enquanto isso não se resolve, a gente não cresce."}};
+
+const CALCQ=[["fat","Hoje vocês faturam mais ou menos quanto por mês?","Ex.: 80 mil"],["pot","E com a estrutura que vocês já têm, até quanto dava pra faturar por mês?","Ex.: 120 mil"]];
+const brl=n=>n.toLocaleString("pt-BR",{style:"currency",currency:"BRL",maximumFractionDigits:0});
+function num(t){if(!t)return NaN;t=String(t).toLowerCase().replace(/r\$|\s/g,"");let mult=1;if(/(mil|k)$/.test(t)){mult=1000;t=t.replace(/(mil|k)$/,"");}if(/,\d{1,2}$/.test(t))t=t.replace(/\./g,"").replace(",",".");else t=t.replace(/[.,]/g,"");const n=parseFloat(t)*mult;return isFinite(n)?n:NaN;}
+function calcText(v){const f=num(v.fat),p=num(v.pot);if(!(f>0&&p>f))return "";const mes=p-f,ano=mes*12;return `Olha só: vocês faturam ${brl(f)} e a estrutura de hoje já aguenta até ${brl(p)}. São ${brl(mes)} por mês ficando na mesa, ${brl(ano)} em um ano. É ${Math.round(mes/f*100)}% a mais do que vocês faturam hoje.`;}
+function syncCusto(){const f=num(vars.fat),p=num(vars.pot);if(f>0&&p>f)vars.custo=brl(p-f);else delete vars.custo;}
+const PH={abertura:"Abertura",diagnostico:"Diagnóstico",dor:"Dor e compromisso",fechamento:"Fechamento"};
+let hist=[], cur="abertura", dor="[dor]", notes={}, vars={};
+const DV={dorEsc:"[dor]",impl:"[implicação]",nec:"[necessidade]",tempo:"[tempo]",custo:"[valor]",pessoal:"[impacto pessoal]"};
+const $=id=>document.getElementById(id);
+const fill=(t,v)=>{v=v||vars;return t.replace(/\{nome\}/g,$("nome").value.trim()||"[nome]").replace(/\{empresa\}/g,$("empresa").value.trim()||"[empresa]").replace(/\{dor\}/g,dor).replace(/\{(dorEsc|impl|nec|tempo|custo|pessoal)\}/g,(m,k)=>v[k]||DV[k]);};
+const dest=to=>to[0]==="@"?(to==="@implNode"?"Implicação":"Necessidade"):N[to].res?N[to].res[0]:(shortQ[to]||"próxima fala");
+const el=(t,c,txt)=>{const e=document.createElement(t);if(c)e.className=c;if(txt!=null)e.textContent=txt;return e;};
+function wire(paths){
+  const s=document.createElementNS("http://www.w3.org/2000/svg","svg");
+  s.setAttribute("class","wire");s.setAttribute("viewBox","0 0 100 26");s.setAttribute("preserveAspectRatio","none");s.setAttribute("aria-hidden","true");
+  paths.forEach(([d,c])=>{const p=document.createElementNS("http://www.w3.org/2000/svg","path");p.setAttribute("d",d);p.setAttribute("class",c);s.appendChild(p);});
+  return s;
+}
+const xs=n=>n===2?[25,75]:[50];
+function card(id,state,d,v){
+  const n=N[id];const c=el("div","node "+state);
+  c.appendChild(el("p","phase",PH[n.p]+(n.etapa?" / "+n.etapa:"")));
+  if(n.res)c.appendChild(el("p","result "+n.res[1],n.res[0]));
+  if(n.say)c.appendChild(el("p","say",fill(n.say.replace(/\{dor\}/g,d),v)));
+  if(n.calc){
+    const vv=v||vars;
+    if(state==="current"){
+      CALCQ.forEach(([key,q,ph])=>{const l=el("label","cap",q);const inp=el("input");inp.className="num";inp.inputMode="decimal";inp.placeholder=ph;inp.value=vv[key]||"";
+        inp.addEventListener("input",()=>{vars[key]=inp.value.trim();syncCusto();const r=c.querySelector(".reveal");const tx=calcText(vars);r.textContent=tx;r.hidden=!tx;const sm=document.querySelector(".summary textarea");if(sm)sm.value=summary();});
+        l.appendChild(inp);c.appendChild(l);});
+    }
+    const r=el("p","say reveal",calcText(vv));r.hidden=!r.textContent;c.appendChild(r);
+  }
+  if(n.tip)c.appendChild(el("p","tip",n.tip));
+  if(n.cap&&state==="past"&&notes[id])c.appendChild(el("p","note",n.cap+": "+notes[id]));
+  if(n.cap&&state==="current"){
+    const l=el("label","cap",n.cap);const ta=el("textarea");ta.value=notes[id]||"";ta.placeholder="Registre a resposta do lead";
+    ta.addEventListener("input",()=>{notes[id]=ta.value.trim();const sm=document.querySelector(".summary textarea");if(sm)sm.value=summary();});
+    l.appendChild(ta);c.appendChild(l);
+  }
+  return c;
+}
+function render(){
+  if(N[cur].dor)dor=N[cur].dor;
+  const t=$("tree");t.innerHTML="";
+  hist.forEach((h,i)=>{
+    const n=N[h.node];
+    t.appendChild(card(h.node,"past",h.dor,h.vars));
+    const pos=xs(n.o.length);
+    const ci=n.o.findIndex(o=>o[0]===h.a);
+    const multi=n.o.length>2;
+    if(n.o.length>=2){
+      t.appendChild(wire(multi?[["M50 0 V26","w-on"]]:pos.map((x,k)=>[`M50 0 V10 H${x} V26`,k===ci?"w-on":"w-off"])));
+      const row=el("div","branches two");
+      n.o.forEach(([label,to,kind,set],k)=>{
+        const b=el("button","br "+(k===ci?"chosen "+(kind||""):"other"));
+        b.appendChild(el("span","lbl",label));
+        b.appendChild(el("span","to",k===ci?"✓ escolhido":(multi?"trocar para esta":"ir por aqui: "+dest(to))));
+        if(k!==ci)b.addEventListener("click",()=>{hist=hist.slice(0,i);cur=h.node;dor=h.dor;vars={...h.vars};go(label,to,set);});
+        else b.disabled=true;
+        row.appendChild(b);
+      });
+      t.appendChild(row);
+      t.appendChild(wire([[multi?"M50 0 V26":`M${pos[ci]} 0 V10 H50 V26`,"w-on"]]));
+    } else {
+      t.appendChild(wire([["M50 0 V26","w-on"]]));
+    }
+  });
+  const n=N[cur];
+  const live=el("div","live grow");
+  live.appendChild(card(cur,"current",dor));
+  if(n.end){
+    const s=el("div","summary");
+    const ta=el("textarea");ta.readOnly=true;ta.value=summary();
+    const cp=el("button","tool","Copiar resumo para o CRM");
+    cp.addEventListener("click",async()=>{try{await navigator.clipboard.writeText(ta.value);cp.textContent="Resumo copiado";}catch(e){ta.select();cp.textContent="Selecionado, copie com Ctrl+C";}});
+    const nv=el("button","tool","Nova ligação");nv.style.marginLeft="8px";nv.addEventListener("click",restart);
+    s.append(ta,cp,nv);live.appendChild(s);
+  } else {
+    const pos=xs(n.o.length);
+    live.appendChild(wire(n.o.length>2?[["M50 0 V26","w-idle"]]:pos.map(x=>[`M50 0 V10 H${x} V26`,"w-idle"])));
+    const row=el("div","branches"+(n.o.length>=2?" two":"")+(n.o.length>2?" multi":""));
+    n.o.forEach(([label,to,kind,set],k)=>{
+      const b=el("button","br "+(kind||""));
+      b.appendChild(el("span","lbl",label));
+      if(n.o.length===2)b.appendChild(el("span","to",dest(to)));
+      {const ex=EX[cur]&&EX[cur][label];if(ex)b.appendChild(el("span","ex","“"+ex+"”"));}
+      b.addEventListener("click",()=>go(label,to,set));
+      row.appendChild(b);
+    });
+    live.appendChild(row);
+  }
+  t.appendChild(live);
+  $("back").disabled=!hist.length;
+  $("noanswer").disabled=cur!=="abertura"||hist.length>0;
+}
+function summary(){
+  const L=[`Lead: ${$("nome").value.trim()||"-"} | Empresa: ${$("empresa").value.trim()||"-"}`];
+  [...hist.map(h=>h.node),cur].forEach(id=>{const n=N[id];
+    if(n.cap&&notes[id])L.push(`${n.cap}: ${notes[id]}`);
+    const h=hist.find(x=>x.node===id);
+    if(h&&n.o&&n.o.length>=2)L.push(`${shortQ[id]||id}: ${h.a}`);});
+  if(vars.dorEsc)L.push("Dor: "+vars.dorEsc);
+  if(vars.tempo)L.push("Há quanto tempo: "+vars.tempo);
+  if(vars.tentou)L.push("Tentativas: "+vars.tentou+(vars.falhou?" ("+vars.falhou+")":""));
+  if(vars.impl)L.push("Implicação: "+vars.impl);
+  if(vars.fat)L.push("Faturamento mensal: "+vars.fat);
+  if(vars.pot)L.push("Potencial com a estrutura atual: "+vars.pot);
+  if(vars.custo)L.push("Dinheiro na mesa: "+vars.custo+" por mês ("+brl((num(vars.pot)-num(vars.fat))*12)+" por ano)");
+  if(vars.pessoal)L.push("Impacto pessoal: "+vars.pessoal);
+  if(vars.nec)L.push("Necessidade: "+vars.nec);
+  const res=[...hist.map(h=>h.to),cur].map(x=>N[x]&&N[x].res).filter(Boolean);
+  if(res.length)L.push("Resultado: "+res.map(r=>r[0]).join(" > "));
+  return L.join("\n");
+}
+function go(label,to,set){hist.push({node:cur,a:label,to,dor,vars:{...vars}});if(set)Object.assign(vars,set);if(to[0]==="@")to=vars[to.slice(1)];hist[hist.length-1].to=to;cur=to;render();const live=document.querySelector(".live");requestAnimationFrame(()=>live.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"}));}
+function back(){if(!hist.length)return;const h=hist.pop();cur=h.node;dor=h.dor;vars={...h.vars};render();}
+function restart(){hist=[];notes={};vars={};cur="abertura";dor="[dor]";render();window.scrollTo({top:0});}
+$("back").onclick=back;$("restart").onclick=restart;
+$("noanswer").onclick=()=>{cur="naoatendeu";render();};
+["nome","empresa"].forEach(id=>$(id).addEventListener("input",render));
+document.addEventListener("keydown",e=>{
+  if(e.target.tagName==="INPUT"||e.target.tagName==="TEXTAREA")return;
+  const b=[...document.querySelectorAll(".live .br")];
+  const k=e.key.toLowerCase();
+  if(k==="s"){const y=b.find(x=>x.classList.contains("yes"));if(y)y.click();}
+  else if(k==="n"){const y=b.find(x=>x.classList.contains("no"));if(y)y.click();}
+  else if(e.key==="Enter"&&b.length===1){b[0].click();}
+  else if(/^[1-4]$/.test(e.key)&&b.length>2&&b[+e.key-1]){b[+e.key-1].click();}
+  else if(e.key==="ArrowLeft"){back();}
+});
+render();
+</script>
+</body>
+</html>
