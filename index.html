@@ -30,7 +30,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:"Instrument Sans
 main{max-width:640px;margin:0 auto;padding:20px 16px 60px}
 h1{font-size:22px;font-weight:600;margin:4px 0 2px;letter-spacing:-0.01em}
 .sub{margin:0 0 16px;font-size:14px;color:var(--muted)}
-.lead{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px}
+.lead{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
 .lead label{font-size:13px;color:var(--muted);display:block}
 .lead input{width:100%;margin-top:4px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font:inherit}
 .tools{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
@@ -88,7 +88,6 @@ svg.wire path{fill:none;stroke-width:2;vector-effect:non-scaling-stroke}
   .grow{animation:grow .35s ease-out}
   @keyframes grow{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
 }
-@media (max-width:520px){.lead{grid-template-columns:1fr 1fr}}
 @media (max-width:420px){.say{font-size:20px}.lead{grid-template-columns:1fr}}
 </style>
 </head>
@@ -99,10 +98,7 @@ svg.wire path{fill:none;stroke-width:2;vector-effect:non-scaling-stroke}
   <div class="lead">
     <label>Nome do lead<input id="nome" autocomplete="off" placeholder="Ex.: Carlos"></label>
     <label>Empresa<input id="empresa" autocomplete="off" placeholder="Ex.: Loja Aurora"></label>
-    <label>Segmento<input id="seg" autocomplete="off" placeholder="Ex.: odontologia"></label>
-    <label>Quando conversou<input id="mes" autocomplete="off" placeholder="Ex.: março"></label>
-    <label>Falou com<input id="vendedor" autocomplete="off" placeholder="Ex.: Calebe"></label>
-    <label>Sobre o quê<input id="assunto" autocomplete="off" placeholder="Ex.: captar mais alunos"></label>
+
   </div>
   <div class="tools">
     <button class="tool" id="back">Voltar</button>
@@ -117,15 +113,15 @@ svg.wire path{fill:none;stroke-width:2;vector-effect:non-scaling-stroke}
 const N = {
   abertura:{"p": "abertura", "say": "Opa, falo com o {nome}?", "tip": "Pausa. Espere ele confirmar antes de seguir.", "o": [["É ele", "apresenta", "yes"], ["Não é ele", "portaria", "no"]]},
   apresenta:{"p": "abertura", "say": "Olá, {nome}, aqui é o Paulo, da V4. Tudo bem?", "tip": "Pausa de novo. Deixe ele responder, não emende a próxima fala.", "o": [["Respondeu", "contexto"]]},
-  contexto:{"p": "abertura", "say": "Te liguei porque em {mes} você conversou com o {vendedor} aqui da V4 sobre {assunto}. Lembra?", "tip": "Seja específico: quando foi, com quem e sobre o quê. Puxe do CRM antes de ligar.", "o": [["Lembra", "decisorq", "yes"], ["Não lembra", "contexto2", "no"], ["Já falou várias vezes", "saturado", ""], ["Não pode falar agora", "ocupado", ""]]},
-  contexto2:{"p": "abertura", "say": "Normal, faz um tempinho. Foi aquela conversa com o {vendedor} sobre {assunto}, e eu tô retomando justamente os casos que ficaram no meio do caminho.", "o": [["Continuar", "decisorq"]]},
+  contexto:{"p": "abertura", "say": "Te liguei porque um tempo atrás você conversou com a nossa equipe sobre as vendas da {empresa}. Lembra?", "tip": "Fale o nome da empresa dele. Isso mostra que a ligação não é aleatória.", "o": [["Lembra", "decisorq", "yes"], ["Não lembra", "contexto2", "no"], ["Já falou várias vezes", "saturado", ""], ["Não pode falar agora", "ocupado", ""]]},
+  contexto2:{"p": "abertura", "say": "Normal, faz um tempinho. Foi uma conversa sobre as vendas da {empresa}, e eu tô retomando justamente os casos que ficaram no meio do caminho.", "o": [["Continuar", "decisorq"]]},
   decisorq:{"p": "abertura", "say": "E hoje, é você que decide sobre vendas e marketing aí na {empresa}?", "tip": "Descubra o decisor antes de diagnosticar.", "o": [["É o decisor", "gancho", "yes"], ["Não é o decisor", "naodecisor", "no"]]},
   portaria:{"p": "abertura", "etapa": "Recepção", "say": "Oi! Aqui é o Paulo, coordenador de receitas da V4. É sobre uma conversa que o {nome} teve com a gente sobre vendas. Ele tá por aí?", "tip": "Seja direto e natural. Recepção filtra quem parece vendedor.", "o": [["Transferiu", "abertura", "yes"], ["Não transferiu", "fim_recepcao", "no"]]},
   saturado:{"p": "abertura", "say": "Justamente por isso quem tá ligando sou eu, e não mais um vendedor. Me dá 30 segundos: se não fizer sentido, eu mesmo tiro seu nome. Fechado?", "tip": "Não se desculpe. Dê um motivo e uma saída que você controla.", "o": [["Deu os 30 segundos", "gancho", "yes"], ["Insistiu em sair", "fim_remover", "no"]]},
   ocupado:{"p": "abertura", "say": "Entendo. É rápido: em 3 minutos eu te mostro se faz sentido ou não, e se não fizer você me fala na hora. Pode ser agora?", "tip": "Tente resolver agora. Retorno marcado pra depois costuma virar bolo.", "o": [["Topou agora", "decisorq", "yes"], ["Realmente não dá", "ocupado2", "no"], ["Só ano que vem", "anoquevem", ""]]},
   ocupado2:{"p": "abertura", "say": "Fechado. Te ligo hoje às [hora] ou daqui a uma hora? Já te mando no WhatsApp pra ficar marcado.", "tip": "Retorno no mesmo dia. Quanto mais longe, maior o risco de sumir.", "o": [["Escolheu horário", "fim_retorno", "yes"], ["Não quer", "saturado", "no"]]},
   anoquevem:{"p": "abertura", "say": "Faz sentido. E o que tá tomando o seu tempo nesse fim de ano?", "tip": "O motivo dele costuma ser a dor. Pergunte antes de aceitar a data.", "o": [["Contou o motivo", "anoquevem2", ""]]},
-  anoquevem2:{"p": "abertura", "say": "Entendi. Então vamos deixar o plano pronto pra virada, a gente tem tido bastante resultado {seg}. Te ligo dia [dia] de janeiro às [hora], pode ser?", "o": [["Marcou data", "fim_retorno", "yes"], ["Recusou", "desq", "no"]]},
+  anoquevem2:{"p": "abertura", "say": "Entendi. Então vamos deixar o plano pronto pra virada, a gente tem tido bastante resultado com empresas como a {empresa}. Te ligo dia [dia] de janeiro às [hora], pode ser?", "o": [["Marcou data", "fim_retorno", "yes"], ["Recusou", "desq", "no"]]},
   rescisao:{"p": "diagnostico", "say": "E se eu te mostrar quantas vendas vocês precisam pra valer a troca, já contando a rescisão do contrato atual? Pra isso, preciso entender rapidinho o cenário de vocês.", "tip": "Não ataque a outra agência. Mostre a conta.", "o": [["Continuar", "q_ineficiencia"]]},
   concorrente:{"p": "diagnostico", "say": "Legal! Há quanto tempo vocês estão com eles, e o resultado tá onde vocês esperavam?", "o": [["Abaixo do esperado", "rescisao", "no"], ["Tá bom", "fim_contrato", "yes"], ["Não sabe dizer", "naodecisor", ""]]},
   naodecisor:{"p": "diagnostico", "say": "Entendi. E quem aí decide sobre vendas e marketing? Me passa o contato que eu mostro o plano direto pra ele, e você participa se quiser.", "tip": "Não faça diagnóstico com quem não decide. Seu objetivo é chegar no decisor.", "o": [["Passou o contato", "fim_decisor", "yes"], ["Quer levar ele mesmo", "plano_dono", ""], ["Não quis passar", "plano_dono", "no"]]},
@@ -199,9 +195,9 @@ function calcText(v){const m=mesa(v);if(!(m>0))return "";if(v.calcMode==="ven"){
 function syncCusto(){const m=mesa(vars);if(m>0)vars.custo=brl(m);else delete vars.custo;}
 const PH={abertura:"Abertura",diagnostico:"Diagnóstico",dor:"Dor e compromisso",fechamento:"Fechamento"};
 let hist=[], cur="abertura", dor="[dor]", notes={}, vars={};
-const DV={seg:"no seu segmento",dorEsc:"[dor]",impl:"[implicação]",nec:"[necessidade]",tempo:"[tempo]",custo:"[valor]",pessoal:"[impacto pessoal]"};
+const DV={dorEsc:"[dor]",impl:"[implicação]",nec:"[necessidade]",tempo:"[tempo]",custo:"[valor]",pessoal:"[impacto pessoal]"};
 const $=id=>document.getElementById(id);
-const fill=(t,v)=>{v=v||vars;return t.replace(/\{nome\}/g,$("nome").value.trim()||"[nome]").replace(/\{empresa\}/g,$("empresa").value.trim()||"[empresa]").replace(/\{mes\}/g,$("mes").value.trim()||"[mês]").replace(/\{vendedor\}/g,$("vendedor").value.trim()||"[vendedor]").replace(/\{assunto\}/g,$("assunto").value.trim()||"[assunto]").replace(/\{seg\}/g,$("seg").value.trim()?"em "+$("seg").value.trim():"no seu segmento").replace(/\{dor\}/g,dor).replace(/\{(dorEsc|impl|nec|tempo|custo|pessoal)\}/g,(m,k)=>v[k]||DV[k]);};
+const fill=(t,v)=>{v=v||vars;return t.replace(/\{nome\}/g,$("nome").value.trim()||"[nome]").replace(/\{empresa\}/g,$("empresa").value.trim()||"[empresa]").replace(/\{dor\}/g,dor).replace(/\{(dorEsc|impl|nec|tempo|custo|pessoal)\}/g,(m,k)=>v[k]||DV[k]);};
 const dest=to=>to[0]==="@"?(to==="@implNode"?"Implicação":"Necessidade"):N[to].res?N[to].res[0]:(shortQ[to]||"próxima fala");
 const el=(t,c,txt)=>{const e=document.createElement(t);if(c)e.className=c;if(txt!=null)e.textContent=txt;return e;};
 function wire(paths){
@@ -318,7 +314,7 @@ function restart(){hist=[];notes={};vars={};cur="abertura";dor="[dor]";render();
 $("back").onclick=back;$("restart").onclick=restart;
 $("noanswer").onclick=()=>{cur="naoatendeu";render();};
 $("reception").onclick=()=>{cur="portaria";render();};
-["nome","empresa","seg","mes","vendedor","assunto"].forEach(id=>$(id).addEventListener("input",render));
+["nome","empresa"].forEach(id=>$(id).addEventListener("input",render));
 document.addEventListener("keydown",e=>{
   if(e.target.tagName==="INPUT"||e.target.tagName==="TEXTAREA")return;
   const b=[...document.querySelectorAll(".live .br")];
